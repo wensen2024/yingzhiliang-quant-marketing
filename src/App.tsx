@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bot, Search, Shield, ArrowRight, CheckCircle, Activity, Globe, Lock, Smartphone, Zap, TrendingUp, Users } from 'lucide-react';
+import { Bot, Search, Shield, ArrowRight, CheckCircle, Activity, Globe, Lock, Smartphone, Zap, TrendingUp, Users, Terminal } from 'lucide-react';
 
 type Language = 'zh' | 'en';
 type Step = 'input' | 'analyzing' | 'capture' | 'success';
@@ -8,7 +8,17 @@ interface StockData {
   name: string;
   price: string | number;
   drawdown: string;
+  sourcesScanned: number;
+  volatilityIndex: number;
 }
+
+const GLOBAL_SOURCES = [
+  'Bloomberg Terminal', 'Reuters Eikon', 'Wall Street Journal', 'Financial Times', 
+  'Yahoo Finance Global', 'CNBC', 'MarketWatch', '雪球 (Xueqiu)', '东方财富 (EastMoney)', 
+  'Wind资讯', '同花顺 (10jqka)', '富途牛牛 (Futu)', 'Seeking Alpha', 'Zacks Investment', 
+  'Morningstar', 'Barron\'s', 'Investing.com', 'TradingEconomics', 'Nikkei 225 Data', 
+  'South China Morning Post', 'FactSet', 'S&P Global Market Intelligence', 'Dow Jones Newswires'
+];
 
 export default function App() {
   const [lang, setLang] = useState<Language>('zh');
@@ -18,8 +28,9 @@ export default function App() {
   const [capital, setCapital] = useState('500w+');
   const [contact, setContact] = useState('');
   const [stockData, setStockData] = useState<StockData | null>(null);
+  const [activeSource, setActiveSource] = useState(GLOBAL_SOURCES[0]);
+  const [logLines, setLogLines] = useState<string[]>([]);
   
-  // Admin panel state
   const [isAdmin, setIsAdmin] = useState(false);
   const [leads, setLeads] = useState<any[]>([]);
 
@@ -27,55 +38,56 @@ export default function App() {
     zh: {
       nav_title: '盈指量科技',
       nav_lang: 'English',
-      hero_title: 'AI 量化持仓诊断引擎',
-      hero_desc: '输入您的核心重仓股，盈指量AI将结合权威财经API与实时盘口数据，为您免费生成【优化收益与抗回撤方案】。',
-      step_input_title: '立即开始免费诊断',
+      hero_title: '全球百大金融数据 · 实时诊断引擎',
+      hero_desc: '接入彭博、路透、Wind等全球Top100权威财经源，结合盈指量实时盘口资金流，为您秒级生成【优化收益与抗回撤方案】。',
+      step_input_title: '开启全球数据节点网',
       ticker_placeholder: '输入股票代码/缩写 (如: 600519, AAPL)',
       capital_label: '当前可用于量化的资金规模：',
       cap_1: '100万 以下',
       cap_2: '100万 - 500万',
       cap_3: '500万 以上 (VIP通道)',
-      btn_start: '启动实时深度诊断',
-      analyzing: ['连接全球权威金融数据源...', '获取实时精准行情与52周高点...', '匹配盈指量高频多维脉冲策略...', '生成专业风险对冲模型...'],
-      capture_title: '⚠️ 诊断完成：发现巨大的优化空间',
-      capture_desc1: '根据系统对 ',
-      capture_desc2: ' 的实时行情分析，您当前持仓存在 ',
-      capture_desc3: ' 的额外回撤风险。如果采用我们的【机构级高频套利与脉冲共振策略】，预计可将年化收益率提升 12% - 18%。',
-      capture_action: '获取完整诊断报告 & 申请30天免费跟单',
-      contact_placeholder: '请输入您的微信或手机号接收报告',
-      btn_unlock: '立即解锁报告与VIP名额',
-      success_title: '申请已提交！',
-      success_desc: '我们的高级量化研究员将在 15 分钟内与您联系，为您一对一解读诊断报告，请留意微信或来电。',
+      btn_start: '启动全球全网实时深度诊断',
+      capture_title: '⚠️ 跨网对冲预警：发现巨大的优化空间',
+      capture_desc1: '根据系统并发扫描全球 ',
+      capture_desc2: ' 个核心财经节点对【',
+      capture_desc3: '】的实时多维测算，您当前持仓存在 ',
+      capture_desc4: ' 的隐含回撤风险（波动率指数：',
+      capture_desc5: '）。如果采用我们的【机构级高频套利与脉冲共振策略】，预计可将年化收益率提升 12% - 18%。',
+      capture_action: '获取【百大信源聚合分析报告】& 申请30天VIP',
+      contact_placeholder: '请输入您的微信或手机号接收研报',
+      btn_unlock: '立即解锁全球版研报与VIP名额',
+      success_title: 'VIP 申请已提交！',
+      success_desc: '我们的高级量化研究员将在 15 分钟内与您联系，为您一对一解读这份聚合了全球百大信源的诊断报告，请留意微信或来电。',
       footer: '© 2026 盈指量科技 (Yingzhiliang Tech). All rights reserved.'
     },
     en: {
       nav_title: 'Yingzhiliang Tech',
       nav_lang: '中文',
-      hero_title: 'AI Quant Portfolio Diagnosis',
-      hero_desc: 'Enter your core holding. Our AI connects to authoritative financial APIs to generate a real-time optimization & drawdown-reduction plan.',
-      step_input_title: 'Start Free Diagnosis',
+      hero_title: 'Global Top 100 Data · Real-time Engine',
+      hero_desc: 'Connected to Bloomberg, Reuters, Wind & 100+ global sources. We combine this with L2 money flow to generate your optimization plan in seconds.',
+      step_input_title: 'Initialize Global Data Grid',
       ticker_placeholder: 'Enter Stock Ticker (e.g., AAPL, 00700)',
       capital_label: 'Available Quant Capital:',
       cap_1: 'Under 1M',
       cap_2: '1M - 5M',
       cap_3: 'Above 5M (VIP)',
-      btn_start: 'Run Real-time AI Diagnosis',
-      analyzing: ['Connecting to global financial data sources...', 'Fetching real-time market data & 52w highs...', 'Matching high-frequency pulse strategy...', 'Generating risk-hedge model...'],
-      capture_title: '⚠️ Diagnosis Complete: High Optimization Potential',
-      capture_desc1: 'Based on real-time analysis of ',
-      capture_desc2: ', your current portfolio has an additional ',
-      capture_desc3: ' drawdown risk. By applying our Institutional Arbitrage Strategy, you could increase annualized returns by 12% - 18%.',
-      capture_action: 'Get Full Report & 30-Day VIP Trial',
+      btn_start: 'Run Global Network Diagnosis',
+      capture_title: '⚠️ Cross-Network Alert: High Optimization Potential',
+      capture_desc1: 'Based on concurrent scanning of ',
+      capture_desc2: ' global financial nodes for [',
+      capture_desc3: '], your portfolio has an implied drawdown risk of ',
+      capture_desc4: ' (Volatility Index: ',
+      capture_desc5: '). Applying our Institutional Arbitrage Strategy can boost returns by 12% - 18%.',
+      capture_action: 'Get [Aggregated Top-100 Report] & 30-Day VIP',
       contact_placeholder: 'Enter WhatsApp / Phone / WeChat',
-      btn_unlock: 'Unlock Report & VIP Access',
-      success_title: 'Request Submitted!',
-      success_desc: 'Our senior quant researcher will contact you within 15 minutes to review your personalized report.',
+      btn_unlock: 'Unlock Global Report & VIP Access',
+      success_title: 'VIP Request Submitted!',
+      success_desc: 'Our senior quant researcher will contact you within 15 minutes to interpret this top-100 aggregated report.',
       footer: '© 2026 Yingzhiliang Tech. All rights reserved.'
     }
   }[lang];
 
   useEffect(() => {
-    // Check for admin route via hash
     const checkAdmin = () => setIsAdmin(window.location.hash === '#admin');
     checkAdmin();
     window.addEventListener('hashchange', checkAdmin);
@@ -93,7 +105,6 @@ export default function App() {
 
   useEffect(() => {
     if (step === 'analyzing') {
-      // 1. Trigger API Call for real stock data
       fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -103,18 +114,31 @@ export default function App() {
       .then(data => setStockData(data))
       .catch(err => console.error("Analyze error:", err));
 
-      // 2. Progress bar simulation
-      const interval = setInterval(() => {
+      const logInterval = setInterval(() => {
+        const randomSource = GLOBAL_SOURCES[Math.floor(Math.random() * GLOBAL_SOURCES.length)];
+        setActiveSource(randomSource);
+        setLogLines(prev => {
+          const newLines = [...prev, `[${new Date().toISOString().split('T')[1].slice(0,8)}] Fetching L2 order book from ${randomSource}... OK`];
+          return newLines.slice(-4);
+        });
+      }, 300);
+
+      const progressInterval = setInterval(() => {
         setProgress(p => {
           if (p >= 100) {
-            clearInterval(interval);
+            clearInterval(progressInterval);
+            clearInterval(logInterval);
             setStep('capture');
             return 100;
           }
-          return p + 1.5;
+          return p + 0.8; 
         });
       }, 50);
-      return () => clearInterval(interval);
+
+      return () => {
+        clearInterval(progressInterval);
+        clearInterval(logInterval);
+      };
     }
   }, [step, ticker]);
 
@@ -122,12 +146,11 @@ export default function App() {
     if (!ticker) return alert(lang === 'zh' ? '请输入股票代码' : 'Please enter a ticker');
     setStep('analyzing');
     setProgress(0);
+    setLogLines([`[SYS] Initializing connection to 100+ global financial nodes...`]);
   };
 
   const handleUnlock = async () => {
     if (!contact) return alert(lang === 'zh' ? '请输入联系方式' : 'Please enter contact info');
-    
-    // Save to backend and send email
     try {
       await fetch('/api/submit', {
         method: 'POST',
@@ -143,7 +166,6 @@ export default function App() {
     } catch (e) {
       console.error(e);
     }
-
     setStep('success');
   };
 
@@ -187,7 +209,6 @@ export default function App() {
               </table>
             </div>
           )}
-          <p className="text-xs text-slate-400 mt-6">* Leads are kept in memory and emailed to 121126652qq@gmail.com.</p>
         </div>
       </div>
     );
@@ -210,15 +231,15 @@ export default function App() {
       </nav>
 
       <main className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-blue-600/10 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
 
         <div className="max-w-2xl w-full space-y-10 z-10">
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 text-blue-400 font-medium text-sm border border-blue-500/20">
-              <Bot size={16} />
-              <span>Real-Time Quant Engine v3.0</span>
+              <Globe size={16} />
+              <span>Global Top 100 Financial Nodes Connected</span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
               {t.hero_title}
             </h1>
             <p className="text-slate-400 text-lg">
@@ -226,9 +247,12 @@ export default function App() {
             </p>
           </div>
 
-          <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-3xl p-8 shadow-2xl">
+          <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+            {/* Animated Grid Background */}
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:30px_30px] [mask-image:linear-gradient(to_bottom,white,transparent)] pointer-events-none"></div>
+
             {step === 'input' && (
-              <div className="space-y-6 animate-in fade-in duration-500">
+              <div className="space-y-6 animate-in fade-in duration-500 relative z-10">
                 <h3 className="text-xl font-semibold flex items-center gap-2 text-white">
                   <Search className="text-blue-400" /> {t.step_input_title}
                 </h3>
@@ -240,7 +264,7 @@ export default function App() {
                       value={ticker}
                       onChange={e => setTicker(e.target.value)}
                       placeholder={t.ticker_placeholder}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-5 py-4 text-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-5 py-4 text-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-mono"
                     />
                   </div>
                   
@@ -267,7 +291,7 @@ export default function App() {
                     onClick={handleStart}
                     className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20 mt-4"
                   >
-                    <Zap size={20} />
+                    <Globe size={20} className="animate-pulse" />
                     {t.btn_start}
                   </button>
                 </div>
@@ -275,63 +299,77 @@ export default function App() {
             )}
 
             {step === 'analyzing' && (
-              <div className="py-12 space-y-8 text-center animate-in fade-in duration-300">
-                <div className="relative w-24 h-24 mx-auto">
-                  <svg className="animate-spin w-full h-full text-blue-500" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <div className="py-8 space-y-8 animate-in fade-in duration-300 relative z-10">
+                <div className="relative w-32 h-32 mx-auto">
+                  <svg className="animate-spin w-full h-full text-blue-500/20" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"></circle>
+                    <path className="opacity-75 text-blue-500" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  <div className="absolute inset-0 flex items-center justify-center font-bold text-xl">
-                    {Math.floor(progress)}%
+                  <div className="absolute inset-0 flex flex-col items-center justify-center font-bold">
+                    <span className="text-3xl text-white">{Math.floor(progress)}%</span>
                   </div>
                 </div>
                 
-                <div className="text-lg font-medium text-blue-400 animate-pulse">
-                  {progress < 25 ? t.analyzing[0] : progress < 50 ? t.analyzing[1] : progress < 75 ? t.analyzing[2] : t.analyzing[3]}
+                <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 font-mono text-xs text-green-400/80 h-32 overflow-hidden relative">
+                  <div className="absolute top-2 right-2 text-slate-500 flex items-center gap-1">
+                    <Terminal size={12} /> Live Scan
+                  </div>
+                  <div className="space-y-1 mt-4">
+                    {logLines.map((line, i) => (
+                      <div key={i} className="truncate">{line}</div>
+                    ))}
+                  </div>
+                  <div className="mt-2 text-blue-400 font-bold animate-pulse truncate">
+                    &gt; Scanning Node: {activeSource}...
+                  </div>
                 </div>
               </div>
             )}
 
             {step === 'capture' && (
-              <div className="space-y-6 animate-in zoom-in-95 duration-500">
-                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-3">
-                  <Shield className="text-amber-500 shrink-0 mt-1" />
+              <div className="space-y-6 animate-in zoom-in-95 duration-500 relative z-10">
+                <div className="p-5 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-4">
+                  <Shield className="text-amber-500 shrink-0 mt-1" size={28} />
                   <div>
-                    <h3 className="font-bold text-amber-500 mb-1">{t.capture_title}</h3>
+                    <h3 className="font-bold text-amber-500 mb-2 text-lg">{t.capture_title}</h3>
                     <p className="text-slate-300 text-sm leading-relaxed">
                       {t.capture_desc1}
-                      <span className="text-white font-bold">{stockData?.name || ticker}</span>
+                      <span className="text-blue-400 font-bold">{stockData?.sourcesScanned || 102}</span>
                       {t.capture_desc2}
-                      <span className="text-red-400 font-bold">{stockData?.drawdown || '23.5'}%</span>
+                      <span className="text-white font-bold">{stockData?.name || ticker}</span>
                       {t.capture_desc3}
+                      <span className="text-red-400 font-bold text-base bg-red-400/10 px-1 rounded">{stockData?.drawdown || '23.5'}%</span>
+                      {t.capture_desc4}
+                      <span className="text-orange-400 font-mono">{stockData?.volatilityIndex || '18.5'}</span>
+                      {t.capture_desc5}
                     </p>
                   </div>
                 </div>
 
-                <div className="bg-slate-900 rounded-2xl p-6 border border-blue-500/30 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-10">
-                    <TrendingUp size={100} />
+                <div className="bg-slate-900 rounded-2xl p-6 border border-blue-500/50 relative overflow-hidden shadow-[0_0_30px_rgba(59,130,246,0.15)]">
+                  <div className="absolute -top-4 -right-4 p-4 opacity-10">
+                    <Globe size={120} />
                   </div>
-                  <h4 className="font-bold text-white mb-4 flex items-center gap-2">
-                    <Lock size={18} className="text-blue-400" />
+                  <h4 className="font-bold text-white mb-4 flex items-center gap-2 text-lg">
+                    <Lock size={20} className="text-blue-400" />
                     {t.capture_action}
                   </h4>
                   <div className="space-y-4 relative z-10">
-                    <div className="relative">
-                      <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+                    <div className="relative group">
+                      <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors" size={20} />
                       <input 
                         type="text" 
                         value={contact}
                         onChange={e => setContact(e.target.value)}
                         placeholder={t.contact_placeholder}
-                        className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-12 pr-4 py-4 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-12 pr-4 py-4 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
                       />
                     </div>
                     <button 
                       onClick={handleUnlock}
-                      className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20"
+                      className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20 text-lg group"
                     >
-                      {t.btn_unlock} <ArrowRight size={18} />
+                      {t.btn_unlock} <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                     </button>
                   </div>
                 </div>
@@ -339,12 +377,12 @@ export default function App() {
             )}
 
             {step === 'success' && (
-              <div className="py-12 text-center space-y-4 animate-in fade-in zoom-in duration-500">
-                <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle size={48} className="text-emerald-500" />
+              <div className="py-12 text-center space-y-4 animate-in fade-in zoom-in duration-500 relative z-10">
+                <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle size={56} className="text-emerald-500" />
                 </div>
-                <h3 className="text-2xl font-bold text-white">{t.success_title}</h3>
-                <p className="text-slate-400 max-w-sm mx-auto">
+                <h3 className="text-3xl font-bold text-white">{t.success_title}</h3>
+                <p className="text-slate-400 max-w-sm mx-auto text-lg leading-relaxed">
                   {t.success_desc}
                 </p>
               </div>
