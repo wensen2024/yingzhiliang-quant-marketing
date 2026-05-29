@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bot, Search, Shield, ArrowRight, CheckCircle, Activity, Globe, Lock, Smartphone, Zap, TrendingUp, Users, Terminal } from 'lucide-react';
+import { Search, Shield, ArrowRight, CheckCircle, Activity, Globe, Lock, Smartphone, Users, Terminal } from 'lucide-react';
 
 type Language = 'zh' | 'en';
 type Step = 'input' | 'analyzing' | 'capture' | 'success';
