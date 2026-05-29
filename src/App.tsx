@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, Globe, ChevronRight, Activity, ShieldCheck, Mail, Database, BrainCircuit, MessageSquare, Target, Users, Zap } from 'lucide-react';
+import { Bot, Globe, ChevronRight, Activity, Mail, Database, BrainCircuit, MessageSquare, Target, Zap } from 'lucide-react';
 
 type Language = 'zh' | 'en';
 
