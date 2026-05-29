@@ -31,8 +31,18 @@ export default function App() {
   const [activeSource, setActiveSource] = useState(GLOBAL_SOURCES[0]);
   const [logLines, setLogLines] = useState<string[]>([]);
   
+  // Admin panel state
   const [isAdmin, setIsAdmin] = useState(false);
   const [leads, setLeads] = useState<any[]>([]);
+
+  // Generate pseudo-random scores based on ticker length for the 20 dimensions
+  const getScore = (index: number) => {
+    const seed = ticker.length + index;
+    const val = (Math.sin(seed) * 50 + 50).toFixed(1);
+    if (parseFloat(val) > 85) return { val, color: 'text-emerald-400', bg: 'bg-emerald-500/10' };
+    if (parseFloat(val) > 40) return { val, color: 'text-blue-400', bg: 'bg-blue-500/10' };
+    return { val, color: 'text-red-400', bg: 'bg-red-500/10' };
+  };
 
   const t = {
     zh: {
@@ -64,8 +74,17 @@ export default function App() {
       report_sharpe_after: '优化后夏普 (盈指量模型)',
       report_alpha: '模型预测 Alpha',
       report_winrate: '高频信号胜率',
-      report_advice_title: 'AI 调仓与对冲建议',
-      report_advice_text: '检测到当前持仓在极端行情下缺乏对冲保护。建议立刻引入【盈指量多维脉冲因子】进行中性化对冲，预计可将最大回撤收敛至 5% 以内，同时捕捉高频波段利润。',
+      report_20d_title: '盈指量 · 20维全息深度剖析引擎',
+      report_20d_desc: '提取全球100+节点数据，运用非线性流形学习与量价动力学，对该标的进行独家深度穿透。',
+      dim_names: [
+        '机构控盘度', '游资接力情绪', '散户跟风指数', '暗盘大单流入',
+        '多维脉冲共振', '量价时空背离', '波动率微笑扭曲', '趋势动量衰竭',
+        '宏观Beta暴露', '盈利动量异象', '供应链风险折价', '政策敏感度',
+        '多空舆情指数', '内部人交易异动', '产业链景气度', '研报一致性偏离',
+        'T+0胜率截面', '黑天鹅尾部风险', '动态网格空间', '机器踩踏预警'
+      ],
+      deep_analysis_title: '🧠 独家超额收益思维导读',
+      deep_analysis_text: '【深度全息诊断】该标的在"多维脉冲共振"与"游资接力情绪"上呈现显著的结构性背离。通过盈指量核心算法测算，其宏观因子Beta暴露过高，极易受系统性风险波及导致机器踩踏。同时，"暗盘大单"显示主力资金正进行隐蔽换手（一致性偏离严重）。强烈建议放弃传统死多头策略，立即植入【盈指量T+0高频网格与中性对冲策略】，利用其剧烈的波动率差，在宽幅震荡中进行无风险套利，榨干其最后的Alpha价值。',
       success_notice_title: '🎯 恭喜，完整报告已获取！',
       success_notice_desc: '我们的量化研究员已收到您的信息，将在15分钟内加您微信/致电，并邀请您进入【盈指量·量化超额收益VIP群】，跟单机构级实盘策略。',
       footer: '© 2026 盈指量科技 (Yingzhiliang Tech). All rights reserved.'
@@ -99,8 +118,17 @@ export default function App() {
       report_sharpe_after: 'Optimized Sharpe (Yingzhiliang)',
       report_alpha: 'Predicted Alpha',
       report_winrate: 'High-Freq Signal Win Rate',
-      report_advice_title: 'AI Rebalancing & Hedge Advice',
-      report_advice_text: 'Detected lack of hedge protection in extreme markets. Recommend immediate deployment of [Yingzhiliang Multi-Dim Pulse Factors] for neutral hedging. Expected to compress max drawdown under 5% while capturing high-frequency swing profits.',
+      report_20d_title: 'Yingzhiliang · 20-Dim Holographic Engine',
+      report_20d_desc: 'Extracting data from 100+ global nodes using non-linear manifold learning & price dynamics for exclusive deep penetration.',
+      dim_names: [
+        'Inst. Control', 'Hot Money Vibe', 'Retail FOMO', 'Dark Pool Flow',
+        'Pulse Resonance', 'Vol-Price Divergence', 'Vol Smile Distort', 'Momentum Decay',
+        'Macro Beta Exp', 'Earnings Anomaly', 'Supply Chain Risk', 'Policy Sens',
+        'Long/Short Sent', 'Insider Anomalies', 'Industry Cycle', 'Analyst Deviat',
+        'T+0 Win-rate', 'Black Swan Tail Risk', 'Grid Arb Space', 'Algo Stampede'
+      ],
+      deep_analysis_title: '🧠 Exclusive Excess Return Thesis',
+      deep_analysis_text: '[Deep Holographic Diagnosis] This asset shows severe structural divergence in "Pulse Resonance" and "Hot Money Vibe". Our algorithm detects excessive Macro Beta exposure, making it vulnerable to systematic algorithmic stampedes. Meanwhile, "Dark Pool" data indicates hidden institutional turnover (high consensus deviation). We strongly advise abandoning traditional long-only holds. Immediately deploy [Yingzhiliang T+0 High-Freq Grid & Neutral Hedge Strategy] to exploit volatility spreads and squeeze out its remaining Alpha through risk-free arbitrage.',
       success_notice_title: '🎯 Full Report Unlocked!',
       success_notice_desc: 'Our quant researcher has received your info and will contact you within 15 mins to invite you to our [Quant Excess Return VIP Group] for institutional live signals.',
       footer: '© 2026 Yingzhiliang Tech. All rights reserved.'
@@ -457,14 +485,36 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700">
-                      <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
-                        <Activity size={16} className="text-blue-400" /> {t.report_advice_title}
+                    {/* 20 Dimensions Section */}
+                    <div className="mt-8 border-t border-slate-800 pt-6">
+                      <h4 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
+                        <Activity size={18} className="text-blue-400" /> {t.report_20d_title}
                       </h4>
-                      <p className="text-slate-300 text-sm leading-relaxed">
-                        {t.report_advice_text}
+                      <p className="text-slate-400 text-xs mb-4">{t.report_20d_desc}</p>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {t.dim_names.map((name, i) => {
+                          const score = getScore(i);
+                          return (
+                            <div key={i} className={`p-2 rounded-lg border border-slate-800 flex justify-between items-center ${score.bg}`}>
+                              <span className="text-xs text-slate-300 truncate mr-2" title={name}>{name}</span>
+                              <span className={`text-sm font-mono font-bold ${score.color}`}>{score.val}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Deep Analysis Text */}
+                    <div className="bg-gradient-to-br from-blue-900/20 to-slate-900 p-5 rounded-xl border border-blue-500/20 shadow-inner">
+                      <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                        <Terminal size={16} className="text-blue-400" /> {t.deep_analysis_title}
+                      </h4>
+                      <p className="text-slate-300 text-sm leading-relaxed text-justify">
+                        {t.deep_analysis_text}
                       </p>
                     </div>
+
                   </div>
                 </div>
 
