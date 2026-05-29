@@ -1,302 +1,272 @@
-import React, { useState } from 'react';
-import { Bot, Globe, ChevronRight, Activity, Mail, Database, BrainCircuit, MessageSquare, Target, Zap } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bot, Search, Shield, ArrowRight, CheckCircle, Activity, Globe, Lock, Smartphone, Zap, TrendingUp } from 'lucide-react';
 
 type Language = 'zh' | 'en';
+type Step = 'input' | 'analyzing' | 'capture' | 'success';
 
 export default function App() {
   const [lang, setLang] = useState<Language>('zh');
+  const [step, setStep] = useState<Step>('input');
+  const [progress, setProgress] = useState(0);
+  const [ticker, setTicker] = useState('');
+  const [capital, setCapital] = useState('500w+');
+  const [contact, setContact] = useState('');
 
-  const content = {
+  const t = {
     zh: {
       nav_title: '盈指量科技',
       nav_lang: 'English',
-      hero_title: 'AI智能营销系统',
-      hero_subtitle: '全球股民精准获客与自动化转化方案',
-      hero_desc: '专注寻找全球500万以上资金体量的A股/港股投资者。AI自动搜索 → 精准识别 → 主动互动 → 引流转化。',
-      hero_cta: '系统演示',
-      
-      section1_title: '一、项目概述',
-      s1_company: '公司',
-      s1_company_val: '盈指量科技（股票量化交易服务商）',
-      s1_target: '目标用户',
-      s1_target_val: '持有500万人民币以上资金的A股/港股股民',
-      s1_tasks: '核心任务',
-      s1_tasks_val: 'AI自动搜索 → 精准识别 → 主动互动 → 引流转化',
-      s1_goal: '最终目标',
-      s1_goal_val: '将高净值股民转化为量化交易付费客户',
-
-      section2_title: '二、系统架构总览',
-      s2_layer1: '数据采集层',
-      s2_layer1_desc: 'Spider 全网爬虫引擎',
-      s2_layer2: 'AI识别层',
-      s2_layer2_desc: '高净值用户画像生成',
-      s2_layer3: '互动转化层',
-      s2_layer3_desc: '7步转化自动营销',
-
-      section3_title: '三、数据采集层 —— 全平台爬虫系统',
-      s3_desc: '分布式爬虫矩阵，日均采集过滤数百万条股民动态。',
-      s3_p1: '股票社交 (雪球、东方财富)',
-      s3_p2: '财经媒体 (财联社、同花顺)',
-      s3_p3: '港股平台 (富途牛牛、老虎证券)',
-      s3_p4: '社交/境外 (微博、抖音、Twitter、YouTube)',
-
-      section4_title: '四、AI用户画像层 —— 精准识别引擎',
-      s4_desc: '多维度评分模型与NLP语义分析，精准锁定“A类用户”（≥70分）。',
-      s4_w1: '资金规模 (35%)',
-      s4_w2: '投资活跃度 (25%)',
-      s4_w3: '专业程度 (20%)',
-      s4_w4: '平台影响力 (15%)',
-      s4_w5: '地理位置 (5%)',
-
-      section5_title: '五、AI自动互动层 —— 智能触达系统',
-      s5_desc: '基于GPT-4级别模型与金融知识库的智能对话引擎。',
-      s5_f1: 'Day 1: 破冰信息',
-      s5_f2: 'Day 3: 价值输出 (量化报告)',
-      s5_f3: 'Day 7: 案例触发 (直击痛点)',
-      s5_f4: 'Day 14: 邀约体验 (免费试用)',
-      s5_f5: 'Day 21: 稀缺性关闭 (策略诊断)',
-      
-      footer_text: '© 2026 盈指量科技 (Yingzhiliang Tech). All rights reserved.'
+      hero_title: 'AI 量化持仓诊断引擎',
+      hero_desc: '输入您的核心重仓股，盈指量AI将结合实时盘口资金流与机构级因子，为您免费生成【优化收益与抗回撤方案】。',
+      step_input_title: '立即开始免费诊断',
+      ticker_placeholder: '输入股票代码/缩写 (如: 600519)',
+      capital_label: '当前可用于量化的资金规模：',
+      cap_1: '100万 以下',
+      cap_2: '100万 - 500万',
+      cap_3: '500万 以上 (VIP通道)',
+      btn_start: '启动 AI 深度诊断',
+      analyzing: ['连接全网舆情与L2行情数据...', '测算持仓夏普比率...', '匹配盈指量高频多维脉冲策略...', '生成风险对冲模型...'],
+      capture_title: '⚠️ 诊断完成：发现巨大的优化空间',
+      capture_desc1: '根据盈指量量化模型回测，您当前的持仓结构存在',
+      capture_desc2: ' 23.5% 的额外回撤风险',
+      capture_desc3: '。如果采用我们的【机构级高频套利与脉冲共振策略】，预计可将年化收益率提升 ',
+      capture_desc4: '12% - 18%',
+      capture_desc5: '。',
+      capture_action: '获取完整诊断报告 & 申请30天免费跟单',
+      contact_placeholder: '请输入您的微信或手机号接收报告',
+      btn_unlock: '立即解锁报告与VIP名额',
+      success_title: '申请已提交！',
+      success_desc: '我们的高级量化研究员将在 15 分钟内与您联系，为您一对一解读诊断报告，请留意微信或来电。',
+      footer: '© 2026 盈指量科技 (Yingzhiliang Tech). All rights reserved.'
     },
     en: {
       nav_title: 'Yingzhiliang Tech',
       nav_lang: '中文',
-      hero_title: 'AI Smart Marketing System',
-      hero_subtitle: 'Precision Acquisition & Automated Conversion for Global Investors',
-      hero_desc: 'Targeting A-share/HK-share investors with >5M RMB capital. AI Auto-Search → Precise ID → Proactive Engagement → Conversion.',
-      hero_cta: 'System Demo',
-      
-      section1_title: 'I. Project Overview',
-      s1_company: 'Company',
-      s1_company_val: 'Yingzhiliang Tech (Quant Trading Provider)',
-      s1_target: 'Target Users',
-      s1_target_val: 'A-share/HK-share investors with >5M RMB capital',
-      s1_tasks: 'Core Tasks',
-      s1_tasks_val: 'Auto-Search → Precise ID → Proactive Engage → Convert',
-      s1_goal: 'Ultimate Goal',
-      s1_goal_val: 'Convert high-net-worth investors into paid quant clients',
-
-      section2_title: 'II. System Architecture Overview',
-      s2_layer1: 'Data Collection Layer',
-      s2_layer1_desc: 'Spider Web-Crawling Engine',
-      s2_layer2: 'AI Profiling Layer',
-      s2_layer2_desc: 'HNWI User Profile Generation',
-      s2_layer3: 'Interaction Layer',
-      s2_layer3_desc: '7-Step Automated Marketing',
-
-      section3_title: 'III. Data Collection - Cross-Platform Spider',
-      s3_desc: 'Distributed spider matrix filtering millions of investor updates daily.',
-      s3_p1: 'Stock Social (Xueqiu, EastMoney)',
-      s3_p2: 'Financial Media (Cailianshe, 10jqka)',
-      s3_p3: 'HK Stock Platforms (Futu, Tiger Brokers)',
-      s3_p4: 'Social/Global (Weibo, TikTok, Twitter, YouTube)',
-
-      section4_title: 'IV. AI Profiling Layer - Precision ID Engine',
-      s4_desc: 'Multi-dimensional scoring & NLP analysis to lock onto "Class-A Users" (≥70 pts).',
-      s4_w1: 'Capital Size (35%)',
-      s4_w2: 'Investment Activity (25%)',
-      s4_w3: 'Professionalism (20%)',
-      s4_w4: 'Platform Influence (15%)',
-      s4_w5: 'Geographic Location (5%)',
-
-      section5_title: 'V. AI Interaction - Smart Outreach System',
-      s5_desc: 'Intelligent dialogue engine based on GPT-4 level models and financial knowledge base.',
-      s5_f1: 'Day 1: Ice-breaking Message',
-      s5_f2: 'Day 3: Value Output (Quant Report)',
-      s5_f3: 'Day 7: Case Study (Pain Points)',
-      s5_f4: 'Day 14: Invitation (Free Trial)',
-      s5_f5: 'Day 21: Scarcity Close (Strategy Diagnosis)',
-      
-      footer_text: '© 2026 Yingzhiliang Tech. All rights reserved.'
+      hero_title: 'AI Quant Portfolio Diagnosis',
+      hero_desc: 'Enter your core holding. Our AI will combine real-time L2 data & institutional factors to generate an optimization & drawdown-reduction plan.',
+      step_input_title: 'Start Free Diagnosis',
+      ticker_placeholder: 'Enter Stock Ticker (e.g., AAPL, 00700)',
+      capital_label: 'Available Quant Capital:',
+      cap_1: 'Under 1M',
+      cap_2: '1M - 5M',
+      cap_3: 'Above 5M (VIP)',
+      btn_start: 'Run AI Diagnosis',
+      analyzing: ['Connecting to global sentiment & L2 data...', 'Calculating Sharpe ratio...', 'Matching high-frequency pulse strategy...', 'Generating risk-hedge model...'],
+      capture_title: '⚠️ Diagnosis Complete: High Optimization Potential',
+      capture_desc1: 'Based on our quant backtesting, your current portfolio has an ',
+      capture_desc2: 'additional 23.5% drawdown risk',
+      capture_desc3: '. By applying our Institutional Arbitrage Strategy, you could increase annualized returns by ',
+      capture_desc4: '12% - 18%',
+      capture_desc5: '.',
+      capture_action: 'Get Full Report & 30-Day VIP Trial',
+      contact_placeholder: 'Enter WhatsApp / Phone / WeChat',
+      btn_unlock: 'Unlock Report & VIP Access',
+      success_title: 'Request Submitted!',
+      success_desc: 'Our senior quant researcher will contact you within 15 minutes to review your personalized report.',
+      footer: '© 2026 Yingzhiliang Tech. All rights reserved.'
     }
+  }[lang];
+
+  useEffect(() => {
+    if (step === 'analyzing') {
+      const interval = setInterval(() => {
+        setProgress(p => {
+          if (p >= 100) {
+            clearInterval(interval);
+            setStep('capture');
+            return 100;
+          }
+          return p + 2;
+        });
+      }, 50);
+      return () => clearInterval(interval);
+    }
+  }, [step]);
+
+  const handleStart = () => {
+    if (!ticker) return alert(lang === 'zh' ? '请输入股票代码' : 'Please enter a ticker');
+    setStep('analyzing');
+    setProgress(0);
   };
 
-  const t = content[lang];
+  const handleUnlock = () => {
+    if (!contact) return alert(lang === 'zh' ? '请输入联系方式' : 'Please enter contact info');
+    setStep('success');
+  };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-slate-50">
+    <div className="min-h-screen flex flex-col font-sans bg-slate-900 text-slate-50">
       {/* Navbar */}
-      <nav className="flex items-center justify-between px-8 py-5 bg-slate-900 text-white sticky top-0 z-50 shadow-xl">
+      <nav className="flex items-center justify-between px-8 py-5 bg-slate-950 sticky top-0 z-50 border-b border-slate-800">
         <div className="flex items-center gap-2">
           <Activity className="text-blue-500" size={28} />
           <span className="font-bold text-xl tracking-tight">{t.nav_title}</span>
         </div>
         <button 
-          onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
-          className="flex items-center gap-1 text-sm font-medium hover:text-blue-400 transition-colors bg-slate-800 px-4 py-2 rounded-full"
+          onClick={() => {
+            setLang(lang === 'zh' ? 'en' : 'zh');
+          }}
+          className="flex items-center gap-1 text-sm font-medium hover:text-blue-400 transition-colors bg-slate-900 px-4 py-2 rounded-full border border-slate-800"
         >
           <Globe size={16} />
           {t.nav_lang}
         </button>
       </nav>
 
-      {/* Hero Section */}
-      <header className="flex-col items-center justify-center text-center px-4 py-20 bg-gradient-to-b from-slate-900 to-slate-800 text-white">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 text-blue-400 font-medium text-sm border border-blue-500/20">
-            <Bot size={16} />
-            <span>AI Powered Marketing Engine</span>
-          </div>
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">
-            {t.hero_title}
-          </h1>
-          <h2 className="text-xl md:text-2xl font-medium text-blue-400">
-            {t.hero_subtitle}
-          </h2>
-          <p className="text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            {t.hero_desc}
-          </p>
-          <div className="pt-6">
-            <button className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 py-4 rounded-full text-lg transition-all shadow-lg hover:shadow-blue-500/25 flex items-center gap-2 mx-auto">
-              {t.hero_cta}
-              <ChevronRight size={20} />
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
 
-      {/* Content Container */}
-      <main className="max-w-5xl mx-auto px-6 py-16 space-y-16">
-        
-        {/* Section 1: Overview */}
-        <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-          <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
-            <Target className="text-blue-500" /> {t.section1_title}
-          </h3>
-          <div className="grid md:grid-cols-2 gap-6">
-            <InfoItem label={t.s1_company} value={t.s1_company_val} />
-            <InfoItem label={t.s1_target} value={t.s1_target_val} />
-            <InfoItem label={t.s1_tasks} value={t.s1_tasks_val} />
-            <InfoItem label={t.s1_goal} value={t.s1_goal_val} />
-          </div>
-        </section>
-
-        {/* Section 2: Architecture */}
-        <section>
-          <h3 className="text-2xl font-bold text-slate-900 mb-8 text-center">{t.section2_title}</h3>
-          <div className="grid md:grid-cols-3 gap-8 relative">
-            {/* Connecting lines for desktop */}
-            <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-blue-100 via-blue-500 to-indigo-100 -z-10"></div>
-            
-            <ArchCard icon={<Database size={32} />} title={t.s2_layer1} desc={t.s2_layer1_desc} color="blue" />
-            <ArchCard icon={<BrainCircuit size={32} />} title={t.s2_layer2} desc={t.s2_layer2_desc} color="indigo" />
-            <ArchCard icon={<MessageSquare size={32} />} title={t.s2_layer3} desc={t.s2_layer3_desc} color="emerald" />
-          </div>
-        </section>
-
-        {/* Section 3 & 4 Grid */}
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Section 3: Data Collection */}
-          <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-            <h3 className="text-xl font-bold text-slate-900 mb-4">{t.section3_title}</h3>
-            <p className="text-slate-500 text-sm mb-6">{t.s3_desc}</p>
-            <ul className="space-y-4">
-              <ListItem text={t.s3_p1} />
-              <ListItem text={t.s3_p2} />
-              <ListItem text={t.s3_p3} />
-              <ListItem text={t.s3_p4} />
-            </ul>
-          </section>
-
-          {/* Section 4: AI Profiling */}
-          <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-            <h3 className="text-xl font-bold text-slate-900 mb-4">{t.section4_title}</h3>
-            <p className="text-slate-500 text-sm mb-6">{t.s4_desc}</p>
-            <div className="space-y-3">
-              <ProgressBar label={t.s4_w1} pct="35%" />
-              <ProgressBar label={t.s4_w2} pct="25%" />
-              <ProgressBar label={t.s4_w3} pct="20%" />
-              <ProgressBar label={t.s4_w4} pct="15%" />
-              <ProgressBar label={t.s4_w5} pct="5%" />
+        <div className="max-w-2xl w-full space-y-10 z-10">
+          
+          <div className="text-center space-y-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 text-blue-400 font-medium text-sm border border-blue-500/20">
+              <Bot size={16} />
+              <span>Lead Generation Engine v2.0</span>
             </div>
-          </section>
-        </div>
-
-        {/* Section 5: Interaction */}
-        <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-          <h3 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-3">
-            <Zap className="text-amber-500" /> {t.section5_title}
-          </h3>
-          <p className="text-slate-500 mb-8">{t.s5_desc}</p>
-          <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between items-center relative">
-            <div className="hidden md:block absolute top-1/2 left-4 right-4 h-1 bg-slate-100 -z-10 rounded-full"></div>
-            <FunnelStep day="1" text={t.s5_f1} active />
-            <FunnelStep day="3" text={t.s5_f2} />
-            <FunnelStep day="7" text={t.s5_f3} />
-            <FunnelStep day="14" text={t.s5_f4} />
-            <FunnelStep day="21" text={t.s5_f5} />
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+              {t.hero_title}
+            </h1>
+            <p className="text-slate-400 text-lg">
+              {t.hero_desc}
+            </p>
           </div>
-        </section>
 
+          {/* Interactive Card */}
+          <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-3xl p-8 shadow-2xl">
+            
+            {step === 'input' && (
+              <div className="space-y-6 animate-in fade-in duration-500">
+                <h3 className="text-xl font-semibold flex items-center gap-2 text-white">
+                  <Search className="text-blue-400" /> {t.step_input_title}
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <input 
+                      type="text" 
+                      value={ticker}
+                      onChange={e => setTicker(e.target.value)}
+                      placeholder={t.ticker_placeholder}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-5 py-4 text-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-400 block">{t.capital_label}</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {['<1m', '1m-5m', '500w+'].map((val, idx) => (
+                        <button
+                          key={val}
+                          onClick={() => setCapital(val)}
+                          className={`py-3 px-2 text-sm font-medium rounded-xl border transition-all ${
+                            capital === val 
+                              ? 'bg-blue-600/20 border-blue-500 text-blue-400' 
+                              : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
+                          }`}
+                        >
+                          {idx === 0 ? t.cap_1 : idx === 1 ? t.cap_2 : t.cap_3}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={handleStart}
+                    className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20 mt-4"
+                  >
+                    <Zap size={20} />
+                    {t.btn_start}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === 'analyzing' && (
+              <div className="py-12 space-y-8 text-center animate-in fade-in duration-300">
+                <div className="relative w-24 h-24 mx-auto">
+                  <svg className="animate-spin w-full h-full text-blue-500" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center font-bold text-xl">
+                    {progress}%
+                  </div>
+                </div>
+                
+                <div className="text-lg font-medium text-blue-400 animate-pulse">
+                  {progress < 25 ? t.analyzing[0] : progress < 50 ? t.analyzing[1] : progress < 75 ? t.analyzing[2] : t.analyzing[3]}
+                </div>
+              </div>
+            )}
+
+            {step === 'capture' && (
+              <div className="space-y-6 animate-in zoom-in-95 duration-500">
+                <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-3">
+                  <Shield className="text-amber-500 shrink-0 mt-1" />
+                  <div>
+                    <h3 className="font-bold text-amber-500 mb-1">{t.capture_title}</h3>
+                    <p className="text-slate-300 text-sm leading-relaxed">
+                      {t.capture_desc1}
+                      <span className="text-red-400 font-bold">{t.capture_desc2}</span>
+                      {t.capture_desc3}
+                      <span className="text-emerald-400 font-bold">{t.capture_desc4}</span>
+                      {t.capture_desc5}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-900 rounded-2xl p-6 border border-blue-500/30 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-10">
+                    <TrendingUp size={100} />
+                  </div>
+                  <h4 className="font-bold text-white mb-4 flex items-center gap-2">
+                    <Lock size={18} className="text-blue-400" />
+                    {t.capture_action}
+                  </h4>
+                  <div className="space-y-4 relative z-10">
+                    <div className="relative">
+                      <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+                      <input 
+                        type="text" 
+                        value={contact}
+                        onChange={e => setContact(e.target.value)}
+                        placeholder={t.contact_placeholder}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-12 pr-4 py-4 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
+                      />
+                    </div>
+                    <button 
+                      onClick={handleUnlock}
+                      className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-600/20"
+                    >
+                      {t.btn_unlock} <ArrowRight size={18} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 'success' && (
+              <div className="py-12 text-center space-y-4 animate-in fade-in zoom-in duration-500">
+                <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle size={48} className="text-emerald-500" />
+                </div>
+                <h3 className="text-2xl font-bold text-white">{t.success_title}</h3>
+                <p className="text-slate-400 max-w-sm mx-auto">
+                  {t.success_desc}
+                </p>
+              </div>
+            )}
+
+          </div>
+
+        </div>
       </main>
 
-      {/* Footer */}
-      <footer className="py-12 bg-slate-900 text-slate-400 text-center mt-auto">
-        <p className="text-sm">{t.footer_text}</p>
-        <p className="text-xs mt-2 flex items-center justify-center gap-1 opacity-50">
-          <Mail size={12} /> 121126652@qq.com
-        </p>
+      <footer className="py-8 text-center text-slate-600 text-sm border-t border-slate-800">
+        {t.footer}
       </footer>
-    </div>
-  );
-}
-
-function InfoItem({ label, value }: { label: string, value: string }) {
-  return (
-    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{label}</div>
-      <div className="text-slate-800 font-medium">{value}</div>
-    </div>
-  );
-}
-
-function ArchCard({ icon, title, desc, color }: { icon: React.ReactNode, title: string, desc: string, color: 'blue'|'indigo'|'emerald' }) {
-  const colorMap = {
-    blue: 'bg-blue-50 text-blue-600 border-blue-100',
-    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-  };
-  return (
-    <div className="flex flex-col items-center text-center p-8 rounded-3xl bg-white border border-slate-200 shadow-sm z-10">
-      <div className={`p-4 rounded-2xl mb-4 border ${colorMap[color]}`}>
-        {icon}
-      </div>
-      <h4 className="font-bold text-lg text-slate-900 mb-2">{title}</h4>
-      <p className="text-sm text-slate-500">{desc}</p>
-    </div>
-  );
-}
-
-function ListItem({ text }: { text: string }) {
-  return (
-    <li className="flex items-center gap-3 text-slate-700">
-      <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-      <span className="font-medium text-sm">{text}</span>
-    </li>
-  );
-}
-
-function ProgressBar({ label, pct }: { label: string, pct: string }) {
-  return (
-    <div>
-      <div className="flex justify-between text-xs font-semibold text-slate-600 mb-1">
-        <span>{label}</span>
-        <span className="text-blue-600">{pct}</span>
-      </div>
-      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-        <div className="h-full bg-blue-500 rounded-full" style={{ width: pct }}></div>
-      </div>
-    </div>
-  );
-}
-
-function FunnelStep({ day, text, active=false }: { day: string, text: string, active?: boolean }) {
-  return (
-    <div className="flex flex-col items-center text-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm md:w-1/5 m-2 md:m-0 z-10 w-full relative">
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-3 ${active ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30' : 'bg-slate-100 text-slate-500'}`}>
-        {day}
-      </div>
-      <div className="text-xs font-bold text-slate-700">{text}</div>
     </div>
   );
 }
