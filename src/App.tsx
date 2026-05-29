@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Shield, ArrowRight, CheckCircle, Activity, Globe, Lock, Smartphone, Users, Terminal } from 'lucide-react';
+import { Search, Shield, ArrowRight, CheckCircle, Activity, Globe, Lock, Smartphone, Users, Terminal, FileText, TrendingUp } from 'lucide-react';
 
 type Language = 'zh' | 'en';
 type Step = 'input' | 'analyzing' | 'capture' | 'success';
@@ -58,6 +58,16 @@ export default function App() {
       btn_unlock: '立即解锁全球版研报与VIP名额',
       success_title: 'VIP 申请已提交！',
       success_desc: '我们的高级量化研究员将在 15 分钟内与您联系，为您一对一解读这份聚合了全球百大信源的诊断报告，请留意微信或来电。',
+      report_title: '【机密】高频量化持仓诊断书',
+      report_metrics_title: '核心量化指标测算',
+      report_sharpe_before: '当前持仓夏普比率',
+      report_sharpe_after: '优化后夏普 (盈指量模型)',
+      report_alpha: '模型预测 Alpha',
+      report_winrate: '高频信号胜率',
+      report_advice_title: 'AI 调仓与对冲建议',
+      report_advice_text: '检测到当前持仓在极端行情下缺乏对冲保护。建议立刻引入【盈指量多维脉冲因子】进行中性化对冲，预计可将最大回撤收敛至 5% 以内，同时捕捉高频波段利润。',
+      success_notice_title: '🎯 恭喜，完整报告已获取！',
+      success_notice_desc: '我们的量化研究员已收到您的信息，将在15分钟内加您微信/致电，并邀请您进入【盈指量·量化超额收益VIP群】，跟单机构级实盘策略。',
       footer: '© 2026 盈指量科技 (Yingzhiliang Tech). All rights reserved.'
     },
     en: {
@@ -83,6 +93,16 @@ export default function App() {
       btn_unlock: 'Unlock Global Report & VIP Access',
       success_title: 'VIP Request Submitted!',
       success_desc: 'Our senior quant researcher will contact you within 15 minutes to interpret this top-100 aggregated report.',
+      report_title: '[CONFIDENTIAL] Quant Portfolio Diagnosis',
+      report_metrics_title: 'Core Quant Metrics',
+      report_sharpe_before: 'Current Sharpe Ratio',
+      report_sharpe_after: 'Optimized Sharpe (Yingzhiliang)',
+      report_alpha: 'Predicted Alpha',
+      report_winrate: 'High-Freq Signal Win Rate',
+      report_advice_title: 'AI Rebalancing & Hedge Advice',
+      report_advice_text: 'Detected lack of hedge protection in extreme markets. Recommend immediate deployment of [Yingzhiliang Multi-Dim Pulse Factors] for neutral hedging. Expected to compress max drawdown under 5% while capturing high-frequency swing profits.',
+      success_notice_title: '🎯 Full Report Unlocked!',
+      success_notice_desc: 'Our quant researcher has received your info and will contact you within 15 mins to invite you to our [Quant Excess Return VIP Group] for institutional live signals.',
       footer: '© 2026 Yingzhiliang Tech. All rights reserved.'
     }
   }[lang];
@@ -377,14 +397,77 @@ export default function App() {
             )}
 
             {step === 'success' && (
-              <div className="py-12 text-center space-y-4 animate-in fade-in zoom-in duration-500 relative z-10">
-                <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle size={56} className="text-emerald-500" />
+              <div className="space-y-8 animate-in fade-in zoom-in duration-500 relative z-10 w-full max-w-3xl mx-auto">
+                
+                {/* Notice Banner */}
+                <div className="bg-gradient-to-r from-emerald-500/20 to-emerald-500/5 border border-emerald-500/30 rounded-2xl p-6 flex flex-col md:flex-row items-center md:items-start gap-4 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
+                  <CheckCircle size={48} className="text-emerald-400 shrink-0" />
+                  <div className="text-center md:text-left">
+                    <h3 className="text-xl font-bold text-emerald-400 mb-2">{t.success_notice_title}</h3>
+                    <p className="text-slate-300 leading-relaxed text-sm md:text-base">
+                      {t.success_notice_desc}
+                    </p>
+                  </div>
                 </div>
-                <h3 className="text-3xl font-bold text-white">{t.success_title}</h3>
-                <p className="text-slate-400 max-w-sm mx-auto text-lg leading-relaxed">
-                  {t.success_desc}
-                </p>
+
+                {/* The Report */}
+                <div className="bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl">
+                  <div className="bg-slate-800 px-6 py-4 border-b border-slate-700 flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <FileText className="text-blue-400" />
+                      <span className="font-bold text-white">{t.report_title}</span>
+                    </div>
+                    <span className="text-xs text-slate-400 font-mono">ID: YZL-{Date.now().toString().slice(-6)}</span>
+                  </div>
+                  
+                  <div className="p-6 space-y-6">
+                    <div className="flex justify-between items-end border-b border-slate-800 pb-4">
+                      <div>
+                        <div className="text-3xl font-black text-white">{stockData?.name || ticker}</div>
+                        <div className="text-slate-400 font-mono mt-1">{ticker} | Data from {stockData?.sourcesScanned || 102} Nodes</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-slate-500">Vol Index</div>
+                        <div className="text-xl font-bold text-orange-400">{stockData?.volatilityIndex || '18.5'}</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-400 mb-4 uppercase">{t.report_metrics_title}</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                          <div className="text-slate-500 text-xs mb-1">{t.report_sharpe_before}</div>
+                          <div className="text-lg font-bold text-white">0.65</div>
+                        </div>
+                        <div className="bg-blue-900/20 p-4 rounded-xl border border-blue-500/30 relative overflow-hidden">
+                          <div className="absolute top-0 right-0 w-16 h-16 bg-blue-500/10 rounded-full blur-xl"></div>
+                          <div className="text-blue-400 text-xs mb-1">{t.report_sharpe_after}</div>
+                          <div className="text-xl font-bold text-blue-400 flex items-center gap-2">
+                            2.84 <TrendingUp size={16} />
+                          </div>
+                        </div>
+                        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                          <div className="text-slate-500 text-xs mb-1">{t.report_alpha}</div>
+                          <div className="text-lg font-bold text-emerald-400">+14.2%</div>
+                        </div>
+                        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                          <div className="text-slate-500 text-xs mb-1">{t.report_winrate}</div>
+                          <div className="text-lg font-bold text-white">68.5%</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700">
+                      <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                        <Activity size={16} className="text-blue-400" /> {t.report_advice_title}
+                      </h4>
+                      <p className="text-slate-300 text-sm leading-relaxed">
+                        {t.report_advice_text}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             )}
           </div>
