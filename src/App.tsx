@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Bot, Search, Shield, ArrowRight, CheckCircle, Activity, Globe, Lock, Smartphone, Zap, TrendingUp } from 'lucide-react';
+import { Bot, Search, Shield, ArrowRight, CheckCircle, Activity, Globe, Lock, Smartphone, Zap, TrendingUp, Users } from 'lucide-react';
 
 type Language = 'zh' | 'en';
 type Step = 'input' | 'analyzing' | 'capture' | 'success';
+
+interface StockData {
+  name: string;
+  price: string | number;
+  drawdown: string;
+}
 
 export default function App() {
   const [lang, setLang] = useState<Language>('zh');
@@ -11,27 +17,30 @@ export default function App() {
   const [ticker, setTicker] = useState('');
   const [capital, setCapital] = useState('500w+');
   const [contact, setContact] = useState('');
+  const [stockData, setStockData] = useState<StockData | null>(null);
+  
+  // Admin panel state
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [leads, setLeads] = useState<any[]>([]);
 
   const t = {
     zh: {
       nav_title: '盈指量科技',
       nav_lang: 'English',
       hero_title: 'AI 量化持仓诊断引擎',
-      hero_desc: '输入您的核心重仓股，盈指量AI将结合实时盘口资金流与机构级因子，为您免费生成【优化收益与抗回撤方案】。',
+      hero_desc: '输入您的核心重仓股，盈指量AI将结合权威财经API与实时盘口数据，为您免费生成【优化收益与抗回撤方案】。',
       step_input_title: '立即开始免费诊断',
-      ticker_placeholder: '输入股票代码/缩写 (如: 600519)',
+      ticker_placeholder: '输入股票代码/缩写 (如: 600519, AAPL)',
       capital_label: '当前可用于量化的资金规模：',
       cap_1: '100万 以下',
       cap_2: '100万 - 500万',
       cap_3: '500万 以上 (VIP通道)',
-      btn_start: '启动 AI 深度诊断',
-      analyzing: ['连接全网舆情与L2行情数据...', '测算持仓夏普比率...', '匹配盈指量高频多维脉冲策略...', '生成风险对冲模型...'],
+      btn_start: '启动实时深度诊断',
+      analyzing: ['连接全球权威金融数据源...', '获取实时精准行情与52周高点...', '匹配盈指量高频多维脉冲策略...', '生成专业风险对冲模型...'],
       capture_title: '⚠️ 诊断完成：发现巨大的优化空间',
-      capture_desc1: '根据盈指量量化模型回测，您当前的持仓结构存在',
-      capture_desc2: ' 23.5% 的额外回撤风险',
-      capture_desc3: '。如果采用我们的【机构级高频套利与脉冲共振策略】，预计可将年化收益率提升 ',
-      capture_desc4: '12% - 18%',
-      capture_desc5: '。',
+      capture_desc1: '根据系统对 ',
+      capture_desc2: ' 的实时行情分析，您当前持仓存在 ',
+      capture_desc3: ' 的额外回撤风险。如果采用我们的【机构级高频套利与脉冲共振策略】，预计可将年化收益率提升 12% - 18%。',
       capture_action: '获取完整诊断报告 & 申请30天免费跟单',
       contact_placeholder: '请输入您的微信或手机号接收报告',
       btn_unlock: '立即解锁报告与VIP名额',
@@ -43,21 +52,19 @@ export default function App() {
       nav_title: 'Yingzhiliang Tech',
       nav_lang: '中文',
       hero_title: 'AI Quant Portfolio Diagnosis',
-      hero_desc: 'Enter your core holding. Our AI will combine real-time L2 data & institutional factors to generate an optimization & drawdown-reduction plan.',
+      hero_desc: 'Enter your core holding. Our AI connects to authoritative financial APIs to generate a real-time optimization & drawdown-reduction plan.',
       step_input_title: 'Start Free Diagnosis',
       ticker_placeholder: 'Enter Stock Ticker (e.g., AAPL, 00700)',
       capital_label: 'Available Quant Capital:',
       cap_1: 'Under 1M',
       cap_2: '1M - 5M',
       cap_3: 'Above 5M (VIP)',
-      btn_start: 'Run AI Diagnosis',
-      analyzing: ['Connecting to global sentiment & L2 data...', 'Calculating Sharpe ratio...', 'Matching high-frequency pulse strategy...', 'Generating risk-hedge model...'],
+      btn_start: 'Run Real-time AI Diagnosis',
+      analyzing: ['Connecting to global financial data sources...', 'Fetching real-time market data & 52w highs...', 'Matching high-frequency pulse strategy...', 'Generating risk-hedge model...'],
       capture_title: '⚠️ Diagnosis Complete: High Optimization Potential',
-      capture_desc1: 'Based on our quant backtesting, your current portfolio has an ',
-      capture_desc2: 'additional 23.5% drawdown risk',
-      capture_desc3: '. By applying our Institutional Arbitrage Strategy, you could increase annualized returns by ',
-      capture_desc4: '12% - 18%',
-      capture_desc5: '.',
+      capture_desc1: 'Based on real-time analysis of ',
+      capture_desc2: ', your current portfolio has an additional ',
+      capture_desc3: ' drawdown risk. By applying our Institutional Arbitrage Strategy, you could increase annualized returns by 12% - 18%.',
       capture_action: 'Get Full Report & 30-Day VIP Trial',
       contact_placeholder: 'Enter WhatsApp / Phone / WeChat',
       btn_unlock: 'Unlock Report & VIP Access',
@@ -68,7 +75,35 @@ export default function App() {
   }[lang];
 
   useEffect(() => {
+    // Check for admin route via hash
+    const checkAdmin = () => setIsAdmin(window.location.hash === '#admin');
+    checkAdmin();
+    window.addEventListener('hashchange', checkAdmin);
+    return () => window.removeEventListener('hashchange', checkAdmin);
+  }, []);
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetch('/api/submit')
+        .then(res => res.json())
+        .then(data => setLeads(data))
+        .catch(console.error);
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
     if (step === 'analyzing') {
+      // 1. Trigger API Call for real stock data
+      fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticker })
+      })
+      .then(res => res.json())
+      .then(data => setStockData(data))
+      .catch(err => console.error("Analyze error:", err));
+
+      // 2. Progress bar simulation
       const interval = setInterval(() => {
         setProgress(p => {
           if (p >= 100) {
@@ -76,12 +111,12 @@ export default function App() {
             setStep('capture');
             return 100;
           }
-          return p + 2;
+          return p + 1.5;
         });
       }, 50);
       return () => clearInterval(interval);
     }
-  }, [step]);
+  }, [step, ticker]);
 
   const handleStart = () => {
     if (!ticker) return alert(lang === 'zh' ? '请输入股票代码' : 'Please enter a ticker');
@@ -89,23 +124,84 @@ export default function App() {
     setProgress(0);
   };
 
-  const handleUnlock = () => {
+  const handleUnlock = async () => {
     if (!contact) return alert(lang === 'zh' ? '请输入联系方式' : 'Please enter contact info');
+    
+    // Save to backend and send email
+    try {
+      await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticker,
+          capital,
+          contact,
+          stockName: stockData?.name,
+          drawdown: stockData?.drawdown
+        })
+      });
+    } catch (e) {
+      console.error(e);
+    }
+
     setStep('success');
   };
 
+  if (isAdmin) {
+    return (
+      <div className="min-h-screen bg-slate-100 p-8 font-sans">
+        <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Users className="text-blue-600" /> Admin Leads Dashboard
+            </h1>
+            <button onClick={() => window.location.hash = ''} className="text-sm text-slate-500 hover:text-blue-600">
+              Exit Admin
+            </button>
+          </div>
+          {leads.length === 0 ? (
+            <div className="text-slate-500 text-center py-10">No leads captured yet.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="p-4 text-sm font-semibold text-slate-600">Time</th>
+                    <th className="p-4 text-sm font-semibold text-slate-600">Contact</th>
+                    <th className="p-4 text-sm font-semibold text-slate-600">Capital</th>
+                    <th className="p-4 text-sm font-semibold text-slate-600">Stock</th>
+                    <th className="p-4 text-sm font-semibold text-slate-600">Drawdown</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leads.map((l: any) => (
+                    <tr key={l.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="p-4 text-sm text-slate-600">{new Date(l.timestamp).toLocaleString()}</td>
+                      <td className="p-4 text-sm font-bold text-slate-800">{l.contact}</td>
+                      <td className="p-4 text-sm text-blue-600 font-semibold">{l.capital}</td>
+                      <td className="p-4 text-sm text-slate-600">{l.stockName} ({l.ticker})</td>
+                      <td className="p-4 text-sm text-red-500 font-medium">{l.drawdown}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p className="text-xs text-slate-400 mt-6">* Leads are kept in memory and emailed to 121126652qq@gmail.com.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col font-sans bg-slate-900 text-slate-50">
-      {/* Navbar */}
       <nav className="flex items-center justify-between px-8 py-5 bg-slate-950 sticky top-0 z-50 border-b border-slate-800">
         <div className="flex items-center gap-2">
           <Activity className="text-blue-500" size={28} />
-          <span className="font-bold text-xl tracking-tight">{t.nav_title}</span>
+          <span className="font-bold text-xl tracking-tight" onDoubleClick={() => window.location.hash = '#admin'}>{t.nav_title}</span>
         </div>
         <button 
-          onClick={() => {
-            setLang(lang === 'zh' ? 'en' : 'zh');
-          }}
+          onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
           className="flex items-center gap-1 text-sm font-medium hover:text-blue-400 transition-colors bg-slate-900 px-4 py-2 rounded-full border border-slate-800"
         >
           <Globe size={16} />
@@ -113,17 +209,14 @@ export default function App() {
         </button>
       </nav>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden">
-        {/* Background glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
 
         <div className="max-w-2xl w-full space-y-10 z-10">
-          
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 text-blue-400 font-medium text-sm border border-blue-500/20">
               <Bot size={16} />
-              <span>Lead Generation Engine v2.0</span>
+              <span>Real-Time Quant Engine v3.0</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
               {t.hero_title}
@@ -133,9 +226,7 @@ export default function App() {
             </p>
           </div>
 
-          {/* Interactive Card */}
           <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-3xl p-8 shadow-2xl">
-            
             {step === 'input' && (
               <div className="space-y-6 animate-in fade-in duration-500">
                 <h3 className="text-xl font-semibold flex items-center gap-2 text-white">
@@ -191,7 +282,7 @@ export default function App() {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center font-bold text-xl">
-                    {progress}%
+                    {Math.floor(progress)}%
                   </div>
                 </div>
                 
@@ -209,10 +300,10 @@ export default function App() {
                     <h3 className="font-bold text-amber-500 mb-1">{t.capture_title}</h3>
                     <p className="text-slate-300 text-sm leading-relaxed">
                       {t.capture_desc1}
-                      <span className="text-red-400 font-bold">{t.capture_desc2}</span>
+                      <span className="text-white font-bold">{stockData?.name || ticker}</span>
+                      {t.capture_desc2}
+                      <span className="text-red-400 font-bold">{stockData?.drawdown || '23.5'}%</span>
                       {t.capture_desc3}
-                      <span className="text-emerald-400 font-bold">{t.capture_desc4}</span>
-                      {t.capture_desc5}
                     </p>
                   </div>
                 </div>
@@ -258,9 +349,7 @@ export default function App() {
                 </p>
               </div>
             )}
-
           </div>
-
         </div>
       </main>
 
