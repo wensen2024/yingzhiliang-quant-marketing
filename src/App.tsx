@@ -10,6 +10,9 @@ interface StockData {
   drawdown: string;
   sourcesScanned: number;
   volatilityIndex: number;
+  analysisZh: string;
+  analysisEn: string;
+  scores: string[];
 }
 
 const GLOBAL_SOURCES = [
@@ -35,13 +38,12 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [leads, setLeads] = useState<any[]>([]);
 
-  // Generate pseudo-random scores based on ticker length for the 20 dimensions
-  const getScore = (index: number) => {
-    const seed = ticker.length + index;
-    const val = (Math.sin(seed) * 50 + 50).toFixed(1);
-    if (parseFloat(val) > 85) return { val, color: 'text-emerald-400', bg: 'bg-emerald-500/10' };
-    if (parseFloat(val) > 40) return { val, color: 'text-blue-400', bg: 'bg-blue-500/10' };
-    return { val, color: 'text-red-400', bg: 'bg-red-500/10' };
+  // Get color styling based on dynamic score
+  const getScoreColor = (valStr: string) => {
+    const val = parseFloat(valStr);
+    if (val > 80) return { color: 'text-emerald-400', bg: 'bg-emerald-500/10' };
+    if (val > 50) return { color: 'text-blue-400', bg: 'bg-blue-500/10' };
+    return { color: 'text-red-400', bg: 'bg-red-500/10' };
   };
 
   const t = {
@@ -84,7 +86,6 @@ export default function App() {
         'T+0胜率截面', '黑天鹅尾部风险', '动态网格空间', '机器踩踏预警'
       ],
       deep_analysis_title: '🧠 独家超额收益思维导读',
-      deep_analysis_text: '【深度全息诊断】该标的在"多维脉冲共振"与"游资接力情绪"上呈现显著的结构性背离。通过盈指量核心算法测算，其宏观因子Beta暴露过高，极易受系统性风险波及导致机器踩踏。同时，"暗盘大单"显示主力资金正进行隐蔽换手（一致性偏离严重）。强烈建议放弃传统死多头策略，立即植入【盈指量T+0高频网格与中性对冲策略】，利用其剧烈的波动率差，在宽幅震荡中进行无风险套利，榨干其最后的Alpha价值。',
       success_notice_title: '🎯 恭喜，完整报告已获取！',
       success_notice_desc: '我们的量化研究员已收到您的信息，将在15分钟内加您微信/致电，并邀请您进入【盈指量·量化超额收益VIP群】，跟单机构级实盘策略。',
       footer: '© 2026 盈指量科技 (Yingzhiliang Tech). All rights reserved.'
@@ -128,7 +129,6 @@ export default function App() {
         'T+0 Win-rate', 'Black Swan Tail Risk', 'Grid Arb Space', 'Algo Stampede'
       ],
       deep_analysis_title: '🧠 Exclusive Excess Return Thesis',
-      deep_analysis_text: '[Deep Holographic Diagnosis] This asset shows severe structural divergence in "Pulse Resonance" and "Hot Money Vibe". Our algorithm detects excessive Macro Beta exposure, making it vulnerable to systematic algorithmic stampedes. Meanwhile, "Dark Pool" data indicates hidden institutional turnover (high consensus deviation). We strongly advise abandoning traditional long-only holds. Immediately deploy [Yingzhiliang T+0 High-Freq Grid & Neutral Hedge Strategy] to exploit volatility spreads and squeeze out its remaining Alpha through risk-free arbitrage.',
       success_notice_title: '🎯 Full Report Unlocked!',
       success_notice_desc: 'Our quant researcher has received your info and will contact you within 15 mins to invite you to our [Quant Excess Return VIP Group] for institutional live signals.',
       footer: '© 2026 Yingzhiliang Tech. All rights reserved.'
@@ -494,11 +494,12 @@ export default function App() {
                       
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {t.dim_names.map((name, i) => {
-                          const score = getScore(i);
+                          const valStr = stockData?.scores?.[i] || '75.0';
+                          const score = getScoreColor(valStr);
                           return (
                             <div key={i} className={`p-2 rounded-lg border border-slate-800 flex justify-between items-center ${score.bg}`}>
                               <span className="text-xs text-slate-300 truncate mr-2" title={name}>{name}</span>
-                              <span className={`text-sm font-mono font-bold ${score.color}`}>{score.val}</span>
+                              <span className={`text-sm font-mono font-bold ${score.color}`}>{valStr}</span>
                             </div>
                           );
                         })}
@@ -511,7 +512,7 @@ export default function App() {
                         <Terminal size={16} className="text-blue-400" /> {t.deep_analysis_title}
                       </h4>
                       <p className="text-slate-300 text-sm leading-relaxed text-justify">
-                        {t.deep_analysis_text}
+                        {lang === 'zh' ? stockData?.analysisZh : stockData?.analysisEn}
                       </p>
                     </div>
 
